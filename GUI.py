@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import time
+from copy import deepcopy
 from globals import *
 
 def createFrameBlack(w, h):
@@ -89,11 +90,11 @@ def addPolaroidBorder(image):
     
 
 def startScreen():
-    pressButtonFrame = createFrameBlack(WINDOW_W, WINDOW_H)
+    pressButtonFrame = createFrameBlack(CAPTURE_W, CAPTURE_H)
     
-    writeTextCenteredHorizontal(pressButtonFrame, CAPTURE_TEXT, CAPTURE_Y - 50, FONT_NORMAL, CAPTURE_SIZE, CAPTURE_THICKNESS, COLOUR_WHITE)
-    writeTextCenteredHorizontal(pressButtonFrame, CAPTURE_TEXT2, CAPTURE_Y + 70, FONT_NORMAL, CAPTURE_SIZE, CAPTURE_THICKNESS, COLOUR_WHITE)
-    writeTextCenteredHorizontal(pressButtonFrame, CAPTURE_TEXT3, CAPTURE_Y + 300, FONT_NORMAL, 2.5, CAPTURE_THICKNESS, COLOUR_WHITE)
+    writeTextCenteredHorizontal(pressButtonFrame, CAPTURE_TEXT, CAPTURE_Y - 375, FONT_NORMAL, CAPTURE_SIZE, CAPTURE_THICKNESS, COLOUR_WHITE)
+    writeTextCenteredHorizontal(pressButtonFrame, CAPTURE_TEXT2, CAPTURE_Y - 255, FONT_NORMAL, CAPTURE_SIZE, CAPTURE_THICKNESS, COLOUR_WHITE)
+    writeTextCenteredHorizontal(pressButtonFrame, CAPTURE_TEXT3, CAPTURE_Y -25, FONT_NORMAL, 2.5, CAPTURE_THICKNESS, COLOUR_WHITE)
     
     return pressButtonFrame
 
@@ -107,25 +108,25 @@ def printScreen():
 def outputDisplay(image):
     print("outputDisplay")
 
-    image = cv2.resize(image, (1440, 900))
+    frame = deepcopy(image)#cv2.resize(image, (1440, 900))
 
     x = 0
-    y = WINDOW_H - 230
-    w = WINDOW_W
-    h = 300
+    y = CAPTURE_H
+    w = CAPTURE_W
+    h = 230
 
-    cv2.rectangle(image, (x, y), (x+w, y+h), COLOUR_BLACK, -1)
-    alpha = 0.6
-    cv2.addWeighted(image, alpha, image, 1 - alpha, 0, image)
+   # black_overlay = cv2.rectangle(frame, (x, y), (x+w, y-h), COLOUR_BLACK, -1)
+    #alpha = 0.6
+    #cv2.addWeighted(frame, alpha, frame, 1 - alpha, 0, frame)
 
     # write start over and print text
-    writeText(image, STARTOVER_TEXT, STARTOVER_X, STARTOVER_Y, FONT_NORMAL, STARTOVER_SIZE, STARTOVER_THICKNESS, COLOUR_WHITE)
-    writeText(image, PRINT_TEXT, PRINT_TEXT_X, PRINT_TEXT_Y, FONT_NORMAL, PRINT_TEXT_SIZE, PRINT_TEXT_THICKNESS, COLOUR_WHITE)
+    writeText(frame, STARTOVER_TEXT, STARTOVER_X, STARTOVER_Y, FONT_NORMAL, STARTOVER_SIZE, STARTOVER_THICKNESS, COLOUR_WHITE)
+    writeText(frame, PRINT_TEXT, PRINT_TEXT_X, PRINT_TEXT_Y, FONT_NORMAL, PRINT_TEXT_SIZE, PRINT_TEXT_THICKNESS, COLOUR_WHITE)
 
-    overlay_transparent(image, arrow, STARTOVER_X + 150, STARTOVER_Y + 20)
-    overlay_transparent(image, arrow, PRINT_TEXT_X + 290, STARTOVER_Y + 20)
+    overlay_transparent(frame, arrow, STARTOVER_X + 120, STARTOVER_Y + 20)
+    overlay_transparent(frame, arrow, PRINT_TEXT_X + 300, STARTOVER_Y + 20)
 
-    cv2.imshow('Photobooth', image)
+    cv2.imshow('Photobooth', frame)
 
 def smileScreen():
     print("smile screen")

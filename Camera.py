@@ -1,6 +1,7 @@
 import picamera.array
 import picamera
 import time
+import cv2
 
 class Camera:
     def __init__(self, previewWidth, previewHeight, captureWidth, captureHeight, frameRate, brightness, rotation, textSize):
@@ -32,7 +33,7 @@ class Camera:
         self._camera.brightness = brightness
         #camera.contrast = 8
         #self._camera.video_stabilization = True
-        #camera.exposure_mode = 'auto'
+        self._exposure_mode = 'auto'
         self._camera.rotation = rotation
         self._rawCapture = picamera.array.PiRGBArray(self._camera, size=(width,height))
         self._camera.annotate_text_size = textSize
@@ -42,7 +43,7 @@ class Camera:
         self._camera.close()
         self.setupCamera(self._captureWidth, self._captureHeight, self._frameRate, self._brightness, self._rotation, self._textSize)
         self.setText("")
-        time.sleep(1) # allow some time for the camera to calibrate
+       ## time.sleep(1) # allow some time for the camera to calibrate
 
         # take the image
         self._camera.capture(self._rawCapture, 'rgb', use_video_port=False)
@@ -51,7 +52,7 @@ class Camera:
         # close and re-open the camera with the preview resolution
         self._camera.close()
         self.setupCamera(self._previewWidth, self._previewHeight, self._frameRate, self._brightness, self._rotation, self._textSize)
-        
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         return img
          
     #def __del__(self): 

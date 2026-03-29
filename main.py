@@ -1,6 +1,7 @@
 import cv2
 from PIL import ImageFont, ImageDraw, Image
 import cups
+import time
 import picamera.array
 import picamera
 from pushover import *
@@ -12,21 +13,49 @@ from Camera import *
 from globals import *
 from GUI import *
 
+leftButton = Button(21, False)
+rightButton = Button(16, False)
+leftLight = LED(4)
+rightLight = LED(13)
 
 # printing
 conn = cups.Connection()
 printers = conn.getPrinters()
 canonPrinter = list(printers.keys())[0] # 0 for canon, 1 for pdf
+print(canonPrinter)
+
+
+t1=0
+flashPeriod=0.25
+flashLeftLight=False
+flashRightLight=False
+
+def flashLeftLED(light):
+    global flashLeftLight
+    if flashLeftLight==False:
+        light.off()
+        flashLeftLight=True
+    else:
+        light.on()
+        flashLeftLight=False
+
+def flashRightLED(light):
+    global flashRightLight
+    if flashRightLight==False:
+        light.off()
+        flashRightLight=True
+    else:
+        light.on()
+        flashRightLight=False
 
 
 def printImage(image):
-    screen = createFrameBlack()
+    screen = createFrameBlack(CAPTURE_W, CAPTURE_H)
         
-    image = cv2.resize(image, None, fx=0.12, fy=0.12)
+    #image = cv2.resize(image, None, fx=0.12, fy=0.12)
     cv2.imwrite("print/scaled_print.jpg", image)
 
-    #job = conn.printFile(canonPrinter, "//home/pi/Desktop/photobooth/print/scaled_print.jpg", "", {'fit-to-page':'True'})
-    job = conn.printTestPage(canonPrinter)
+    job = conn.printFile(canonPrinter, "//home/pi/Desktop/Newphotobooth/photobooth/print/scaled_print.jpg", "", {'fit-to-page':'True'})
     print("print job " + str(job))
     
     while True:
@@ -36,17 +65,17 @@ def printImage(image):
             time.sleep(2)
             
             writeTextCenteredHorizontal(screen, "Printing your photo...", 900/2 - 100, FONT_NORMAL, 4, 4, COLOUR_WHITE)    
-            progStr = "{0}%".format(str(jobProgress))
+            #progStr = "{0}%".format(str(jobProgress))
 
             cv2_im_rgb = cv2.cvtColor(screen, cv2.COLOR_BGR2RGB)
             pil_im = Image.fromarray(cv2_im_rgb)
             draw = ImageDraw.Draw(pil_im)
-            draw.text((1400/2-100, 900/2), progStr, font=roboto_font)
+            #draw.text((1400/2-100, 900/2), progStr, font=roboto_font)
             screen = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
             
             cv2.imshow('Photobooth', screen)
             cv2.waitKey(1000)
-            screen = createFrameBlack()
+            screen = createFrameBlack(CAPTURE_W,CAPTURE_H)
                         
         else:
             # should wait for 5 secs or so
@@ -56,9 +85,17 @@ def printImage(image):
             cv2.waitKey(5000)
             writeTextCenteredHorizontal(screen, "Collect your photo below!", 900/2, FONT_NORMAL, 3.5, 4, COLOUR_WHITE)
             cv2.imshow('Photobooth', screen)
-            cv2.waitKey(4000)
+            cv2.waitKey(30000)
             break
         
+
+def resetLights():
+    global flashRightLight
+    global flashLeftLight
+    leftLight.off()
+    rightLight.off()
+    flashLeftLight=False
+    flashRightLight=False
 
 def main():
     # Check if we have an internet connection
@@ -103,28 +140,38 @@ if __name__ == "__main__":
     
     while running:
         cv2.imshow('Photobooth', startScreen())
-
+        t=time.time()
+        if t-t1 >= flashPeriod:
+            flashLeftLED(leftLight)
+            t1=time.time()
         k = cv2.waitKey(1)
-        if k == BUTTON_CAPTURE:
+        if leftButton.is_pressed:
+            resetLights()
             smileScreen()
             cv2.waitKey(1)
-            
             image = countdownDisplay(COUNTDOWN_TIME, camera)
             outputDisplay(image)
-
+            save(image)
             while True:
+                t=time.time()
+                if t-t1 >= flashPeriod:
+                    flashLeftLED(leftLight)
+                    flashRightLED(rightLight)
+                    t1=time.time()
                 k = cv2.waitKey(1)
-                if k == BUTTON_STARTOVER:
+                if leftButton.is_pressed:
                     print("startover")
                     break
-                if k == BUTTON_PRINT:
+                if rightButton.is_pressed:
                     print("print")
                     cv2.imshow('Photobooth', printScreen())
 
                     save(image)
+                    printImage(image)
                     
                     cv2.waitKey(3000)
                     break
+            resetLights()
 
         if k == BUTTON_EXIT:
             running = False
